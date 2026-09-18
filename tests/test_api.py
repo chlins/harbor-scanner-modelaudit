@@ -199,7 +199,7 @@ def test_scan_end_to_end(client: TestClient):
             "registry": {"url": REG, "authorization": "Bearer t"},
             "artifact": {"repository": REPO, "digest": digest, "mime_type": MIME_MODEL_MANIFEST},
             "enabled_capabilities": [
-                {"type": "model-security", "produces_mime_types": [MIME_MODEL_SECURITY_REPORT]},
+                {"type": "model-security", "produces_mime_types": [MIME_MODEL_SECURITY_REPORT], "parameters": None},
                 {"type": "sbom", "produces_mime_types": [MIME_SBOM_REPORT]},
             ],
         },

@@ -73,7 +73,8 @@ class Artifact(BaseModel):
 class EnabledCapability(BaseModel):
     type: str = SCAN_TYPE_MODEL_SECURITY
     produces_mime_types: list[str] = Field(default_factory=list)
-    parameters: dict[str, Any] = Field(default_factory=dict)
+    # Harbor sends "parameters": null for scan types without parameters
+    parameters: dict[str, Any] | None = None
 
 
 class ScanRequest(BaseModel):

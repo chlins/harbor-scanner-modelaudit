@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 from scanner.api.models import SEVERITY_CRITICAL, SEVERITY_LOW, SEVERITY_MEDIUM, SEVERITY_NONE, max_severity
@@ -133,3 +134,10 @@ def test_run_modelaudit_on_malicious_pickle(tmp_path: Path):
     assert bom["bomFormat"] == "CycloneDX"
     names = {c["name"] for c in bom["components"]}
     assert "model.pkl" in names
+    # no scratch paths leak, refs are relative to the model root
+    assert str(model.root) not in json.dumps(bom)
+    assert {c["bom-ref"] for c in bom["components"]} == names
+    assert {d["ref"] for d in bom["dependencies"]} >= names
+    root = bom["metadata"]["component"]
+    assert root["type"] == "machine-learning-model"
+    assert root["name"] == "library/m" and root["version"] == "sha256:abc"

@@ -62,11 +62,51 @@ def run_modelaudit(model: FetchedModel, *, timeout: int, max_total_size: int = 0
 
 
 def generate_sbom(model: FetchedModel, raw_result: dict[str, Any]) -> dict[str, Any]:
-    """Generate a CycloneDX BOM for the model directory."""
+    """Generate a CycloneDX BOM for the model directory.
+
+    ModelAudit uses absolute scratch paths as bom-refs; they are rewritten to paths relative
+    to the model root, and the model artifact itself is added as the root component so the
+    BOM describes "this OCI artifact" and not a temporary directory.
+    """
     from modelaudit.integrations.sbom_generator import generate_sbom as ma_generate_sbom
 
     payload = ma_generate_sbom([str(model.root)], raw_result)
-    return json.loads(payload)
+    bom = json.loads(payload)
+    return _normalize_sbom(bom, model)
+
+
+def _normalize_sbom(bom: dict[str, Any], model: FetchedModel) -> dict[str, Any]:
+    prefix = str(model.root).rstrip("/") + "/"
+
+    def rel(ref: Any) -> Any:
+        if isinstance(ref, str) and ref.startswith(prefix):
+            return ref[len(prefix) :]
+        return ref
+
+    for component in bom.get("components", []) or []:
+        component["bom-ref"] = rel(component.get("bom-ref"))
+        if component.get("name"):
+            component["name"] = rel(component["name"])
+    for dep in bom.get("dependencies", []) or []:
+        dep["ref"] = rel(dep.get("ref"))
+        if "dependsOn" in dep:
+            dep["dependsOn"] = [rel(d) for d in dep["dependsOn"]]
+
+    metadata = bom.setdefault("metadata", {})
+    metadata.setdefault(
+        "component",
+        {
+            "type": "machine-learning-model",
+            "bom-ref": f"{model.repository}@{model.digest}",
+            "name": model.repository,
+            "version": model.digest,
+            "properties": [
+                {"name": "oci:artifactType", "value": model.artifact_type},
+                {"name": "oci:digest", "value": model.digest},
+            ],
+        },
+    )
+    return bom
 
 
 def _to_dict(result: Any) -> dict[str, Any]:
