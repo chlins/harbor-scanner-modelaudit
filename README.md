@@ -34,13 +34,14 @@ ModelAudit on that directory. Nothing is ever loaded with an ML framework.
 ```bash
 docker run --rm -p 8080:8080 \
   -e SCANNER_REDIS_URL=redis://redis:6379 \
-  goharbor/harbor-scanner-modelaudit:latest
+  ghcr.io/chlins/harbor-scanner-modelaudit:latest
 
 curl -s http://localhost:8080/api/v1/metadata | jq
 ```
 
-Then in Harbor: Administration → Interrogation Services → New Scanner, endpoint
-`http://<adapter>:8080`. Harbor's `install.sh --with-modelaudit` does this for you.
+Then in Harbor (2.17+): Administration → Interrogation Services → New Scanner, endpoint
+`http://<adapter>:8080`. Keep Trivy as the default scanner; Harbor picks ModelAudit for
+model artifacts automatically.
 
 ## Configuration
 

@@ -1,4 +1,4 @@
-IMAGE ?= goharbor/harbor-scanner-modelaudit
+IMAGE ?= ghcr.io/chlins/harbor-scanner-modelaudit
 TAG   ?= dev
 
 .PHONY: setup lint fmt test build build-full run

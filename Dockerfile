@@ -10,7 +10,7 @@ RUN uv venv /opt/venv && \
     VIRTUAL_ENV=/opt/venv uv pip install --no-cache . ${MODELAUDIT_EXTRAS:+"modelaudit[${MODELAUDIT_EXTRAS}]"}
 
 FROM python:3.12-slim
-LABEL org.opencontainers.image.source="https://github.com/goharbor/harbor-scanner-modelaudit" \
+LABEL org.opencontainers.image.source="https://github.com/chlins/harbor-scanner-modelaudit" \
       org.opencontainers.image.licenses="Apache-2.0"
 RUN useradd --uid 10000 --create-home scanner && mkdir -p /tmp/scanner && chown scanner /tmp/scanner
 COPY --from=build /opt/venv /opt/venv

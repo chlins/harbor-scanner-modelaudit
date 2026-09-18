@@ -18,6 +18,9 @@ jobs:
   image:
     runs-on: ubuntu-latest
     needs: test
+    permissions:
+      contents: read
+      packages: write
     steps:
       - uses: actions/checkout@v4
       - uses: docker/setup-buildx-action@v3
@@ -27,3 +30,18 @@ jobs:
           docker run -d --name scanner -p 8080:8080 harbor-scanner-modelaudit:ci
           for i in $(seq 1 20); do curl -fs localhost:8080/api/v1/metadata && break; sleep 1; done
           curl -fs localhost:8080/api/v1/metadata | grep ModelAudit
+      - name: login to ghcr
+        if: github.event_name == 'push'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: push
+        if: github.event_name == 'push'
+        run: |
+          IMAGE=ghcr.io/${{ github.repository }}
+          IMAGE=${IMAGE,,}
+          if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then TAG=${GITHUB_REF#refs/tags/}; else TAG=latest; fi
+          docker tag harbor-scanner-modelaudit:ci $IMAGE:$TAG
+          docker push $IMAGE:$TAG
